@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALTAIR — Аренда студий по районам Москвы</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --border: #E4E2DA;
+    --text: #1A1A18;
+    --text-muted: #7A7870;
+    --accent: #FF7231;
+    --accent-light: #FFF0E9;
+    --green: #1A6B3C;
+    --green-bg: #E8F5EE;
+    --amber: #7A4A00;
+    --amber-bg: #FFF3DC;
+    --blue: #FF7231;
+    --blue-bg: #FFF0E9;
+    --radius: 10px;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: var(--accent);
+    padding: 28px 24px 24px;
+    text-align: center;
+  }
+
+
+  header h1 {
+    font-size: clamp(18px, 4vw, 26px);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.25;
+    margin-bottom: 6px;
+  }
+
+  header p {
+    font-size: 13px;
+    color: rgba(255,255,255,0.6);
+  }
+
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 20px 16px 48px;
+  }
+
+  /* FILTERS */
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+    padding-top: 4px;
+  }
+
+  .badge {
+    cursor: pointer;
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+    user-select: none;
+    white-space: nowrap;
+  }
+
+  .badge:hover { border-color: var(--accent); color: var(--accent); }
+  .badge.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  .stat-value {
+    font-size: clamp(15px, 3vw, 20px);
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  /* TABLE WRAPPER */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  /* DESKTOP TABLE */
+  .desktop-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .desktop-table th {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: #FAFAF8;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  .desktop-table th.sortable {
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .desktop-table th.sortable:hover { color: var(--accent); }
+
+  .desktop-table td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    vertical-align: middle;
+  }
+
+  .desktop-table tr:last-child td { border-bottom: none; }
+  .desktop-table tbody tr:hover td { background: #FAFAF8; }
+
+  .district-name { font-weight: 600; font-size: 14px; color: var(--text); }
+  .district-okrug { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+  .rent-val { font-weight: 700; font-size: 15px; color: var(--text); }
+  .yield-val { font-weight: 700; color: var(--green); }
+
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .pill-green { background: var(--green-bg); color: var(--green); }
+  .pill-blue  { background: #FFF0E9;  color: #FF7231;  }
+  .pill-amber { background: var(--amber-bg); color: var(--amber); }
+
+  .metro-val { color: var(--text-muted); font-size: 13px; }
+
+  /* MOBILE CARDS */
+  .mobile-cards { display: none; }
+
+  .m-card {
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+  }
+  .m-card:last-child { border-bottom: none; }
+
+  .m-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .m-card-title { font-weight: 700; font-size: 15px; }
+  .m-card-sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  .m-card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .m-kv-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
+  .m-kv-value { font-size: 14px; font-weight: 600; color: var(--text); }
+  .m-kv-value.green { color: var(--green); }
+
+  /* NOTE */
+  .note {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* EMPTY */
+  .empty {
+    padding: 40px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .desktop-table { display: none; }
+    .mobile-cards { display: block; }
+    .stats-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat-card { padding: 10px 8px; }
+    header { padding: 22px 16px 18px; }
+  }
+  .logo-wrap { margin: 0 auto 12px; width: 180px; display: flex; align-items: center; justify-content: center; }
+  .logo-wrap svg { width: 100%; height: auto; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <svg width="2135" height="407" viewBox="0 0 2135 407" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M42.4025 270.648H0.10791V405.991H42.4025V270.648Z" fill="white"/>
+<path d="M25.1481 307.197L0 270.923L120.489 177.875L145.28 214.454L25.1481 307.197Z" fill="white"/>
+<path d="M42.4025 0H0.10791V135.343H42.4025V0Z" fill="white"/>
+<path d="M380.797 0H338.502V406.066H380.797V0Z" fill="white"/>
+<path d="M380.792 0H42.4001V45.1142H380.792V0Z" fill="white"/>
+<path d="M380.792 360.93H42.4001V406.044H380.792V360.93Z" fill="white"/>
+<path d="M1707.25 309.602H1747.8V95.0043H1707.25V309.602Z" fill="white"/>
+<path d="M1994.57 94.9844H1954.02V309.582H1994.57V94.9844Z" fill="white"/>
+<path d="M776.421 309.582H816.929L717.087 94.9844H676.542L776.421 309.582Z" fill="white"/>
+<path d="M604.773 309.582H564.264L664.142 94.9844H704.651L604.773 309.582Z" fill="white"/>
+<path d="M1368.93 94.9844H1328.39V309.582H1368.93V94.9844Z" fill="white"/>
+<path d="M1450.35 94.9844H1246.98V126.077H1450.35V94.9844Z" fill="white"/>
+<path d="M764.199 229.398H623.241V254.013H764.199V229.398Z" fill="white"/>
+<path d="M1641.35 309.582H1681.89L1582.01 94.9844H1541.47L1641.35 309.582Z" fill="white"/>
+<path d="M1469.74 309.582H1429.2L1529.08 94.9844H1569.59L1469.74 309.582Z" fill="white"/>
+<path d="M1629.13 229.398H1488.18V254.013H1629.13V229.398Z" fill="white"/>
+<path d="M1758.84 309.582H1722.76L1856.93 94.9844H1893.01L1758.84 309.582Z" fill="white"/>
+<path d="M1908.51 94.9844H1867.97V309.582H1908.51V94.9844Z" fill="white"/>
+<path d="M989.752 309.602H1030.3V95.0043H989.752V309.602Z" fill="white"/>
+<path d="M1969.92 94.9844V119.599H2054.15C2076.19 119.599 2094.09 138.651 2094.09 162.198C2094.09 185.708 2076.23 204.798 2054.15 204.798H1969.92V229.412H2071.58C2106.38 229.412 2134.6 199.311 2134.6 162.198C2134.6 125.086 2106.38 94.9844 2071.58 94.9844H1969.92Z" fill="white"/>
+<path d="M1119.7 94.9844H1079.16V309.582H1119.7V94.9844Z" fill="white"/>
+<path d="M1095.05 309.616V285.001H1179.29C1201.33 285.001 1219.22 265.949 1219.22 242.402C1219.22 218.892 1201.36 199.802 1179.29 199.802H1095.05V175.188H1196.72C1231.51 175.188 1259.73 205.289 1259.73 242.402C1259.73 279.514 1231.51 309.616 1196.72 309.616H1095.05Z" fill="white"/>
+<path d="M1004.47 94.9844H903.123V125.315H1004.47V94.9844Z" fill="white"/>
+<path d="M869.262 94.9844V254.827C869.262 271.478 856.617 284.967 841.006 284.967H830.433V309.582H858.546C886.837 309.582 909.806 285.119 909.806 254.904V94.9844H869.262Z" fill="white"/>
+</svg>
+  </div>
+  <h1>Аренда студий по районам Москвы</h1>
+  <p>Сравнение ставок, доходности и доступности метро</p>
+</header>
+
+<div class="container">
+
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card">
+      <div class="stat-label">Районов</div>
+      <div class="stat-value" id="statCount">21</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Средняя аренда</div>
+      <div class="stat-value" id="statRent">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Средняя доходность</div>
+      <div class="stat-value" id="statYield">—</div>
+    </div>
+  </div>
+
+  <div class="filters" id="filters">
+    <span class="badge active" data-type="all">Все</span>
+    <span class="badge" data-type="ЦАО">ЦАО</span>
+    <span class="badge" data-type="САО">САО</span>
+    <span class="badge" data-type="СВАО">СВАО</span>
+    <span class="badge" data-type="ВАО">ВАО</span>
+    <span class="badge" data-type="ЮЗАО">ЮЗАО</span>
+    <span class="badge" data-type="ЗАО">ЗАО</span>
+    <span class="badge" data-type="СЗАО">СЗАО</span>
+  </div>
+
+  <div class="table-wrap">
+    <!-- DESKTOP -->
+    <table class="desktop-table">
+      <thead>
+        <tr>
+          <th style="width:28%">Район</th>
+          <th style="width:24%" class="sortable" onclick="sortTable('rent')">Аренда/мес ↕</th>
+          <th style="width:18%" class="sortable" onclick="sortTable('yield')">Доходность ↕</th>
+          <th style="width:18%">Метро</th>
+          <th style="width:12%">Спрос</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <!-- MOBILE -->
+    <div class="mobile-cards" id="mobileCards"></div>
+  </div>
+
+
+</div>
+
+<script>
+const data = [
+  { name: 'Арбат',              okrug: 'ЦАО',  price: 4200000, rent: 65000, metro: '3–5',   demand: 'high' },
+  { name: 'Пресненский',        okrug: 'ЦАО',  price: 4500000, rent: 70000, metro: '5–7',   demand: 'high' },
+  { name: 'Тверской',           okrug: 'ЦАО',  price: 5000000, rent: 75000, metro: '3–7',   demand: 'high' },
+  { name: 'Замоскворечье',      okrug: 'ЦАО',  price: 4800000, rent: 72000, metro: '5–8',   demand: 'high' },
+  { name: 'Басманный',          okrug: 'ЦАО',  price: 3800000, rent: 60000, metro: '5–10',  demand: 'high' },
+  { name: 'Сокольники',         okrug: 'ВАО',  price: 3200000, rent: 50000, metro: '5–8',   demand: 'mid'  },
+  { name: 'Преображенское',     okrug: 'ВАО',  price: 2900000, rent: 45000, metro: '7–10',  demand: 'mid'  },
+  { name: 'Измайлово',          okrug: 'ВАО',  price: 2700000, rent: 42000, metro: '8–10',  demand: 'mid'  },
+  { name: 'Аэропорт',           okrug: 'САО',  price: 3400000, rent: 52000, metro: '5–7',   demand: 'mid'  },
+  { name: 'Хорошёвский',        okrug: 'САО',  price: 3600000, rent: 55000, metro: '5–9',   demand: 'mid'  },
+  { name: 'Алтуфьевский',       okrug: 'СВАО', price: 2400000, rent: 38000, metro: '8–10',  demand: 'low'  },
+  { name: 'Бабушкинский',       okrug: 'СВАО', price: 2600000, rent: 40000, metro: '7–10',  demand: 'low'  },
+  { name: 'Марьина Роща',       okrug: 'СВАО', price: 3100000, rent: 50000, metro: '5–8',   demand: 'mid'  },
+  { name: 'Академический',      okrug: 'ЮЗАО', price: 3500000, rent: 54000, metro: '5–8',   demand: 'mid'  },
+  { name: 'Гагаринский',        okrug: 'ЮЗАО', price: 3800000, rent: 58000, metro: '5–10',  demand: 'mid'  },
+  { name: 'Черёмушки',          okrug: 'ЮЗАО', price: 3200000, rent: 48000, metro: '5–8',   demand: 'mid'  },
+  { name: 'Фили',               okrug: 'ЗАО',  price: 3600000, rent: 56000, metro: '5–8',   demand: 'mid'  },
+  { name: 'Кунцево',            okrug: 'ЗАО',  price: 3000000, rent: 46000, metro: '7–10',  demand: 'low'  },
+  { name: 'Хорошёво-Мнёвники',  okrug: 'ЗАО',  price: 3400000, rent: 52000, metro: '7–10',  demand: 'mid'  },
+  { name: 'Щукино',             okrug: 'СЗАО', price: 3100000, rent: 48000, metro: '5–8',   demand: 'mid'  },
+  { name: 'Строгино',           okrug: 'СЗАО', price: 2800000, rent: 43000, metro: '5–8',   demand: 'low'  },
+];
+
+let currentFilter = 'all';
+let sortKey = 'rent';
+let sortAsc = false;
+
+function calcYield(r) { return ((r.rent * 12) / r.price * 100).toFixed(1); }
+function fmtRent(n) { return (n / 1000).toFixed(0) + ' 000 ₽'; }
+function fmtRentFull(n) { return n.toLocaleString('ru-RU') + ' ₽'; }
+
+function demandPill(d) {
+  if (d === 'high') return '<span class="pill pill-green">Высокий</span>';
+  if (d === 'mid')  return '<span class="pill pill-blue">Средний</span>';
+  return '<span class="pill pill-amber">Умеренный</span>';
+}
+
+function getRows() {
+  let rows = [...data];
+  if (currentFilter !== 'all') rows = rows.filter(r => r.okrug === currentFilter);
+  rows.sort((a, b) => {
+    let av = sortKey === 'yield' ? parseFloat(calcYield(a)) : a[sortKey];
+    let bv = sortKey === 'yield' ? parseFloat(calcYield(b)) : b[sortKey];
+    return sortAsc ? av - bv : bv - av;
+  });
+  return rows;
+}
+
+function updateStats(rows) {
+  document.getElementById('statCount').textContent = rows.length;
+  if (!rows.length) {
+    document.getElementById('statRent').textContent = '—';
+    document.getElementById('statYield').textContent = '—';
+    return;
+  }
+  const avgRent = Math.round(rows.reduce((s, r) => s + r.rent, 0) / rows.length);
+  const avgYield = (rows.reduce((s, r) => s + parseFloat(calcYield(r)), 0) / rows.length).toFixed(1);
+  document.getElementById('statRent').textContent = fmtRent(avgRent);
+  document.getElementById('statYield').textContent = avgYield + '%';
+}
+
+function render() {
+  const rows = getRows();
+  updateStats(rows);
+
+  if (!rows.length) {
+    document.getElementById('tbody').innerHTML = '<tr><td colspan="5" class="empty">Нет данных для выбранного округа</td></tr>';
+    document.getElementById('mobileCards').innerHTML = '<div class="empty">Нет данных</div>';
+    return;
+  }
+
+  document.getElementById('tbody').innerHTML = rows.map(r => `
+    <tr>
+      <td><div class="district-name">${r.name}</div><div class="district-okrug">${r.okrug}</div></td>
+      <td><span class="rent-val">${fmtRentFull(r.rent)}</span></td>
+      <td><span class="yield-val">${calcYield(r)}%</span></td>
+      <td><span class="metro-val">${r.metro} мин</span></td>
+      <td>${demandPill(r.demand)}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('mobileCards').innerHTML = rows.map(r => `
+    <div class="m-card">
+      <div class="m-card-head">
+        <div>
+          <div class="m-card-title">${r.name}</div>
+          <div class="m-card-sub">${r.okrug}</div>
+        </div>
+        ${demandPill(r.demand)}
+      </div>
+      <div class="m-card-grid">
+        <div>
+          <div class="m-kv-label">Аренда/мес</div>
+          <div class="m-kv-value">${fmtRent(r.rent)}</div>
+        </div>
+        <div>
+          <div class="m-kv-label">Доходность</div>
+          <div class="m-kv-value green">${calcYield(r)}%</div>
+        </div>
+        <div>
+          <div class="m-kv-label">Метро</div>
+          <div class="m-kv-value">${r.metro} мин</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function sortTable(key) {
+  if (sortKey === key) sortAsc = !sortAsc;
+  else { sortKey = key; sortAsc = false; }
+  render();
+}
+
+document.getElementById('filters').addEventListener('click', e => {
+  if (!e.target.classList.contains('badge')) return;
+  document.querySelectorAll('.badge').forEach(b => b.classList.remove('active'));
+  e.target.classList.add('active');
+  currentFilter = e.target.dataset.type;
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
